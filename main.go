@@ -13,8 +13,8 @@ func main() {
 
 	v1 := router.Group("/api/v1/swagger")
 	{
-		//v1.POST("/data/fake",)
-		//v1.GET("/data/:id/fake",)
+		v1.POST("/data/:id/fake",controllerfake.PostToThisData)
+		v1.GET("/data/:id/fake",controllerfake.GetThisUser)
 		v1.GET("/datas/fakes",controllerfake.GetUsers)
 		//v1.PUT("/data/:id/fake", )
 		//v1.DELETE("/data/:id/fake", )
