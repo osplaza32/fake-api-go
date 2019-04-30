@@ -1,74 +1,114 @@
 package controllerfake
+
 import (
+	"fmt"
+	"github.com/appleboy/gin-jwt"
 	"github.com/gin-gonic/gin"
-	"github.com/wawandco/fako"
 	"net/http"
+	"reflect"
 	"strconv"
+	"osplaza32/ApiFastToTest/Models"
 )
-type User struct {
-	Id int
-	Name     string `fako:"full_name"`
-	Username string `fako:"user_name"`
-	Email    string `fako:"email_address"`//Notice the fako:"email_address" tag
-	Phone    string `fako:"phone"`
-	Password string `fako:"simple_password"`
-	Address  string `fako:"street_address"`
-	Extras DataUser
- }
-type DataUser struct {
-	Id int
-	Edad     string
-	Compania string
-	ColorOjos    string
-	ColorPelo    string
 
-}
-type Users struct {
-	app string
-	users []User
-}
-func (u Users) makeuser() Users {
-	for i := 0; i < 10; i++ {
-		u.users = append(u.users, makeUser())
-		u.users[i].Id = i
-		}
-	return u
-	}
-func (u Users) checkparameterFill(i int)bool {
-	if  len(u.users)-1 >= i {
-		return true
-		}
-	return false
-}
-func makeUser() User {
-	var user User
-	fako.Fill(&user)
-	return user
 
-}
+
 func GetUsers(c *gin.Context){
-	var users Users
-	users.app = "FaKE aPi"
-	users = users.makeuser()
-	c.JSON(http.StatusOK,gin.H{"algo":users.app,"data":users.users})
+	var users Models.Users
+	users.App = "FaKE aPi"
+	users = users.Makeuser()
+	c.JSON(http.StatusOK,gin.H{"algo":users.App,"data":users.Users})
 	}
 func PostToThisData(c *gin.Context){
+	var users Models.Users
+	users = users.Makeuser()
+
+	var data Models.DataUser
+	err := c.BindJSON(&data)
+	if err != nil {
+		c.JSON(http.StatusBadRequest,gin.H{"Message":"El elemento enviado presenta caracteristicas inusuales"+err.Error()})
+		return
+	}
+	userid := c.Param("id")
+	i1, err := strconv.Atoi(userid)
+	if err != nil {
+		c.JSON(http.StatusBadRequest,gin.H{"Message":"El elemento enviado en el parametro no es un numero"})
+		return
+	}
+	if users.CheckparameterFill(i1-1) == false{
+		c.JSON(http.StatusNotFound,gin.H{"Message":"El elemento no encontrado"})
+		return
+	}
+	users.Users[i1-1].Extras = data
+	c.JSON(http.StatusCreated,gin.H{"Message":"El elemento se creo bien","Data":users.Users[i1-1]})
+
+
+
 
 
 }
+func EditThisUser(c *gin.Context){
+	var userEdir  Models.UserEdit
+	var users Models.Users
+	users = users.Makeuser()
+
+	 userid := c.Param("id")
+	i1, err := strconv.Atoi(userid)
+	if err != nil {
+		c.JSON(http.StatusBadRequest,gin.H{"Message":"El elemento enviado en el parametro no es un numero"})
+		return
+	}
+	if users.CheckparameterFill(i1-1) == false{
+		c.JSON(http.StatusNotFound,gin.H{"Message":"El elemento no encontrado"})
+		return
+	}
+	err = c.BindJSON(&userEdir)
+	if err != nil {
+		c.JSON(http.StatusBadRequest,gin.H{"Message":"El elemento enviado presenta caracteristicas inusuales"+err.Error()})
+		return
+	}
+	returnelemen := SeeDiff(users.Users[i1-1],userEdir)
+	//fmt.Println(returnelemen)
+	c.JSON(http.StatusOK,gin.H{"data":returnelemen})
+	}
+
+func SeeDiff(user Models.UserFake, edit Models.UserEdit) Models.UserFake {
+	v := reflect.ValueOf(user)
+	values := make([]interface{}, v.NumField())
+	for i := 0; i < v.NumField(); i++ {
+		values[i] = v.Field(i).Interface()
+		fmt.Println(reflect.TypeOf(values[i]))
+		}
+
+	return user
+}
+
+func IsZeroOfUnderlyingType(x interface{}) bool {
+	return x == reflect.Zero(reflect.TypeOf(x)).Interface()
+}
 func GetThisUser(c *gin.Context) {
-	var users Users
-	users.app = "FaKE aPi"
-	users = users.makeuser()
+	var users Models.Users
+	users.App = "FaKE aPi"
+	users = users.Makeuser()
 	userid := c.Param("id")
 	i1, err := strconv.Atoi(userid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest,gin.H{"Message":"El elemento enviado en el parametro no es un numero"})
 		return
 		}
-	if users.checkparameterFill(i1-1) == false{
+	if users.CheckparameterFill(i1-1) == false{
 		c.JSON(http.StatusNotFound,gin.H{"Message":"El elemento no encontrado"})
 		return
 		}
-	c.JSON(http.StatusOK,gin.H{"algo":users.app,"data":users.users[i1-1]})
+	c.JSON(http.StatusOK,gin.H{"algo":users.App,"data":users.Users[i1-1]})
+}
+func HelloHandler(c *gin.Context) {
+	claims := jwt.ExtractClaims(c)
+	user, _ := c.Get(Models.IdentityKey)
+
+
+	c.JSON(200, gin.H{
+		"userID":   claims["id"],
+		"userName": user.(*Models.User).UserName,
+		"text":     "Hello World.",
+	})
 }
