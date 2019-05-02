@@ -1,7 +1,6 @@
 package Config
 
 import (
-	"fmt"
 	"github.com/appleboy/gin-jwt"
 	"github.com/gin-gonic/gin"
 	"osplaza32/ApiFastToTest/Models"
@@ -35,7 +34,6 @@ func MakeJWT(TokenHeadName string)(*jwt.GinJWTMiddleware, error)  {
 			if err := c.ShouldBind(&loginVals); err != nil {
 				return "", jwt.ErrMissingLoginValues
 			}
-			fmt.Println(loginVals)
 
 			userID := loginVals.Username
 			password := loginVals.Password

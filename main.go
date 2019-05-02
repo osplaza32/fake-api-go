@@ -29,11 +29,9 @@ func main() {
 		v1.GET("/datas/fakes",controllerfake.GetUsers)
 		//v1.PUT("/data/:id/fake",controllerfake.EditThisUser )
 		//v1.DELETE("/data/:id/fake", )
+		}
 
-
-	}
-
-	authMiddleware,err := Config.MakeJWT("falabella")
+	authMiddleware,err := Config.MakeJWT("oscar-key")
 	if err != nil {
 		log.Fatal("JWT Error:" + err.Error())
 	}

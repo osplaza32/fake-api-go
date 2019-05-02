@@ -2,6 +2,105 @@ package Models
 
 import "github.com/wawandco/fako"
 
+type Serviceinfo struct {
+	Item struct {
+		Link []struct {
+			URI string `json:"-uri,omitempty"`
+			Rel string `json:"-rel,omitempty"`
+
+		} `json:"Link"`
+		Resource struct {
+			Service struct {
+				ID            string `json:"-id"`
+				Version       string `json:"-version"`
+				ServiceDetail struct {
+					ServiceMappings struct {
+						HTTPMapping struct {
+							URLPattern string `json:"UrlPattern"`
+							Verbs      struct {
+								Verb []string `json:"Verb"`
+							} `json:"Verbs"`
+						} `json:"HttpMapping"`
+					} `json:"ServiceMappings"`
+					Properties struct {
+						Property []struct {
+							Key          string `json:"-key"`
+							BooleanValue string `json:"BooleanValue,omitempty"`
+							LongValue    string `json:"LongValue,omitempty"`
+						} `json:"Property"`
+					} `json:"Properties"`
+					FolderID string `json:"-folderId"`
+					ID       string `json:"-id"`
+					Version  string `json:"-version"`
+					Name     string `json:"Name"`
+					Enabled  string `json:"Enabled"`
+				} `json:"ServiceDetail"`
+				Resources struct {
+					ResourceSet struct {
+						Resource struct {
+							Content string `json:"#content"`
+							Type    string `json:"-type"`
+							Version string `json:"-version"`
+						} `json:"Resource"`
+						Tag string `json:"-tag"`
+					} `json:"ResourceSet"`
+				} `json:"Resources"`
+			} `json:"Service"`
+		} `json:"Resource"`
+		L7        string `json:"-l7"`
+		Name      string `json:"Name"`
+		ID        string `json:"Id"`
+		Type      string `json:"Type"`
+		TimeStamp string `json:"TimeStamp"`
+	} `json:"Item"`
+}
+
+
+type Policyinfo struct {
+	Item struct {
+		Name      string `json:"Name"`
+		ID        string `json:"Id"`
+		Type      string `json:"Type"`
+		TimeStamp string `json:"TimeStamp"`
+		Link      []struct {
+			Rel string `json:"-rel"`
+			URI string `json:"-uri,omitempty"`
+		} `json:"Link"`
+		Resource struct {
+			Policy struct {
+				GUID         string `json:"-guid"`
+				ID           string `json:"-id"`
+				Version      string `json:"-version"`
+				PolicyDetail struct {
+					ID         string `json:"-id"`
+					Version    string `json:"-version"`
+					Name       string `json:"Name"`
+					PolicyType string `json:"PolicyType"`
+					Properties struct {
+						Property []struct {
+							Key          string `json:"-key"`
+							LongValue    string `json:"LongValue,omitempty"`
+							BooleanValue string `json:"BooleanValue,omitempty"`
+						} `json:"Property"`
+					} `json:"Properties"`
+					FolderID string `json:"-folderId"`
+					GUID     string `json:"-guid"`
+				} `json:"PolicyDetail"`
+				Resources struct {
+					ResourceSet struct {
+						Resource struct {
+							Content string `json:"#content"`
+							Type    string `json:"-type"`
+						} `json:"Resource"`
+						Tag string `json:"-tag"`
+					} `json:"ResourceSet"`
+				} `json:"Resources"`
+			} `json:"Policy"`
+		} `json:"Resource"`
+		L7 string `json:"-l7"`
+	} `json:"Item"`
+
+}
 var IdentityKey = "id"
 type Caca struct {
 	stuff interface{} // <- El camino a la gloria con las otras ideas!!!
