@@ -5,6 +5,8 @@ import (
 	"github.com/appleboy/gin-jwt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"osplaza32/ApiFastToTest/Models/modelsdb"
+	"osplaza32/ApiFastToTest/config"
 	"reflect"
 	"strconv"
 	"osplaza32/ApiFastToTest/Models"
@@ -103,12 +105,15 @@ func GetThisUser(c *gin.Context) {
 }
 func HelloHandler(c *gin.Context) {
 	claims := jwt.ExtractClaims(c)
-	user, _ := c.Get(Models.IdentityKey)
+
+	id := claims["id"].(string)
+	user := modelsdb.User{}
+	db,err := Config.Conneccion()
+	if err != nil {
+		panic(fmt.Sprintf("No error should happen when connect database, but got %+v", err))
+	}
+	db.Where(&modelsdb.User{ID:id}).First(&user)
 
 
-	c.JSON(200, gin.H{
-		"userID":   claims["id"],
-		"userName": user.(*Models.User).UserName,
-		"text":     "Hello World.",
-	})
+	c.JSON(200,user)
 }

@@ -1,9 +1,12 @@
 package Config
 
 import (
+	"fmt"
 	"github.com/appleboy/gin-jwt"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"osplaza32/ApiFastToTest/Models"
+	"osplaza32/ApiFastToTest/Models/modelsdb"
 	"time"
 )
 
@@ -16,17 +19,17 @@ func MakeJWT(TokenHeadName string)(*jwt.GinJWTMiddleware, error)  {
 		MaxRefresh:  time.Hour,
 		IdentityKey: Models.IdentityKey,
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
-			if v, ok := data.(*Models.User); ok {
+			if v, ok := data.(*modelsdb.User); ok {
 				return jwt.MapClaims{
-					Models.IdentityKey: v.UserName,
+					Models.IdentityKey: v.ID,
 				}
 			}
 			return jwt.MapClaims{}
 		},
 		IdentityHandler: func(c *gin.Context) interface{} {
 			claims := jwt.ExtractClaims(c)
-			return &Models.User{
-				UserName: claims["id"].(string),
+			return &modelsdb.User{
+				ID: claims["id"].(string),
 			}
 		},
 		Authenticator: func(c *gin.Context) (interface{}, error) {
@@ -35,25 +38,44 @@ func MakeJWT(TokenHeadName string)(*jwt.GinJWTMiddleware, error)  {
 				return "", jwt.ErrMissingLoginValues
 			}
 
-			userID := loginVals.Username
-			password := loginVals.Password
+			email := loginVals.Username
 
-			if (userID == "admin" && password == "admin") || (userID == "test" && password == "test") {
-				return &Models.User{
-					UserName:  userID,
-					LastName:  "Bo-Yi",
-					FirstName: "Wu",
-				}, nil
+			user := modelsdb.User{}
+			db,err := Conneccion()
+			if err != nil {
+				panic(fmt.Sprintf("No error should happen when connect database, but got %+v", err))
 			}
+			db.Where(&modelsdb.User{Email:email}).First(&user)
+			err = bcrypt.CompareHashAndPassword([]byte(user.Password),[]byte(loginVals.Password))
+			if err == nil {
+				return &user, nil
+
+
+			}else{
+				return nil, jwt.ErrFailedAuthentication
+
+			}
+
 
 			return nil, jwt.ErrFailedAuthentication
 		},
 		Authorizator: func(data interface{}, c *gin.Context) bool {
-			if v, ok := data.(*Models.User); ok && v.UserName == "admin" {
-				return true
+			claims := jwt.ExtractClaims(c)
+			id := claims["id"].(string)
+			user := modelsdb.User{}
+			db,err := Conneccion()
+			if err != nil {
+				panic(fmt.Sprintf("No error should happen when connect database, but got %+v", err))
+			}
+			db.Where(&modelsdb.User{ID:id}).First(&user)
+			fmt.Println(user)
+			if user.Email == ""{
+				return false
+
 			}
 
-			return false
+			return true
+
 		},
 		Unauthorized: func(c *gin.Context, code int, message string) {
 			c.JSON(code, gin.H{

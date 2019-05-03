@@ -3,15 +3,37 @@ package Config
 import (
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"github.com/pborman/uuid"
 	_ "github.com/lib/pq"
+	"github.com/pborman/uuid"
 	"github.com/subosito/gotenv"
+	"golang.org/x/crypto/bcrypt"
 	"os"
 	"osplaza32/ApiFastToTest/Models/modelsdb"
-	"reflect"
-	"strings"
 )
 
+func Init(){
+	db,err := Conneccion()
+	if err != nil {
+		panic(fmt.Sprintf("No error should happen when connect database, but got %+v", err))
+	}
+	fmt.Println("coneccion %+v",db)
+	db.Exec("CREATE EXTENSION postgis")
+	db.Exec("CREATE EXTENSION postgis_topology")
+	db.DropTable(&modelsdb.User{})
+
+	db.AutoMigrate(&modelsdb.User{})
+	db.DropTable(&modelsdb.Swagger{})
+
+	db.AutoMigrate(&modelsdb.Swagger{})
+	db.DropTable(&modelsdb.Service{})
+
+	db.AutoMigrate(&modelsdb.Service{})
+	db.DropTable(&modelsdb.Policy{})
+
+	db.AutoMigrate(&modelsdb.Policy{})
+	seed(db)
+
+}
 func Conneccion() (*gorm.DB,error) {
 	gotenv.Load()
 	var as string
@@ -23,18 +45,22 @@ func Conneccion() (*gorm.DB,error) {
 	db.Callback().Create().Before("gorm:create").Register("my_plugin:before_create", beforeCreate)
 
 	db.LogMode(true)
-	db.Exec("CREATE EXTENSION postgis")
-	db.Exec("CREATE EXTENSION postgis_topology")
-	db.AutoMigrate(&modelsdb.User{})
-	db.AutoMigrate(&modelsdb.Policy{})
-
-
 	return db,err
 }
-func beforeCreate(scope *gorm.Scope) {
-	reflectValue := reflect.Indirect(reflect.ValueOf(scope.Value))
-	if strings.Contains(string(reflectValue.Type().Field(0).Tag), "uuid") {
-		uuid.SetClockSequence(-1)
-		scope.SetColumn("id", uuid.NewUUID().String())
+
+func seed(db *gorm.DB) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("123456789"), bcrypt.DefaultCost)
+	if err != nil {
+		panic(fmt.Sprintf("No error should happen when connect database, but got %+v", err))
+
 	}
+	user := &modelsdb.User{FirstName:"Oscar",LastName:"Plaza",Email:"oscar.plaza@techo.org",Password:string(hashedPassword[:])}
+	db.Create(&user)
+
+
+
+}
+func beforeCreate(scope *gorm.Scope) {
+	scope.SetColumn("id", uuid.NewUUID().String())
+
 }
